@@ -1,0 +1,101 @@
+{
+	"name": "宋慶洪",
+	"sex": "男",
+	"age": 17,
+	"adress":
+	{
+		"country": "Taiwan",
+		"city": "Taipei",
+		"postCode": "116"
+	},
+	"phoneNumber":
+	[
+		{
+			"type": "家用",
+			"number": "2234-1401"
+		},
+		{
+			"type": "手機",
+			"number": "0921189662"
+		}
+	],
+	"E-mail": "jamesbaloney28@gmail.com"
+}
+
+--------------------------------------------------------------------------------------------------------------
+
+{
+	"name": "宋慶甯",
+	"sex": "女",
+	"age": 27,
+	"adress":
+	{
+		"country": "Taiwan",
+		"city": "Taipei",
+		"postCode": "116"
+	},
+	"phoneNumber":
+	[
+		{
+			"type": "家用",
+			"number": "2234-1401"
+		},
+		{
+			"type": "手機",
+			"number": "0973270920"
+		}
+	],
+	"E-mail": "nan"
+}
+
+--------------------------------------------------------------------------------------------------------
+
+{
+	"name": "宋慶澔",
+	"sex": "男",
+	"age": 20,
+	"adress":
+	{
+		"country": "Taiwan",
+		"city": "Taipei",
+		"postCode": "116"
+	},
+	"phoneNumber":
+	[
+		{
+			"type": "家用",
+			"number": "2234-1401"
+		},
+		{
+			"type": "手機",
+			"number": "0976730900"
+		}
+	],
+	"E-mail": "howard_sung0@gmail.com"
+}
+
+--------------------------------------------------------------------------------------------------
+
+{
+	"name": "吳威廷",
+	"sex": "男",
+	"age": 17,
+	"adress":
+	{
+		"country": "Taiwan",
+		"city": "Taipei",
+		"postCode": "116"
+	},
+	"phoneNumber":
+	[
+		{
+			"type": "家用",
+			"number": "nan"
+		},
+		{
+			"type": "手機",
+			"number": "0912420338"
+		}
+	],
+	"E-mail": "nan"
+}
