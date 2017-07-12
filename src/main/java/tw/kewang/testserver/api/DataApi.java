@@ -12,14 +12,14 @@ public class DataApi {
     private static volatile List<Member> members = new ArrayList<>();
     private final Gson gson = new Gson();
     private final Answer noResult = new Answer("not found");
-
+    private final Answer yesResult = new Answer("OK");
     @POST
     public Response post(String body) {
         Member mem = gson.fromJson(body, Member.class);
         mem.setAns("OK");
         members.add(mem);
         System.out.println(gson.toJson(mem));
-        return Response.ok().entity(gson.toJson(mem.getAns())).build();
+        return Response.ok().entity(gson.toJson(yesResult)).build();
     }
 
 
@@ -42,7 +42,7 @@ public class DataApi {
         Member detRes = detect(keyword);
         if (detRes != null) {
             members.remove(detect(keyword));
-            return Response.ok().entity(gson.toJson("ok")).build();
+            return Response.ok().entity(gson.toJson(yesResult)).build();
         } else {
             return Response.ok().entity(gson.toJson(noResult)).build();
         }
