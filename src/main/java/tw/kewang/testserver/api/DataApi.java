@@ -50,20 +50,26 @@ public class DataApi {
 
     @Path("{keyword}/{dataToPut}")
     @PUT
-    public Response put(@PathParam("keyword") String keyword, @PathParam("keyword") String dataToPut, String body) {
-        Member detRes = detect(keyword);
-        if (detRes.getName().equals(dataToPut)) {
-            detRes.setName(body);
-        } else if (detRes.getSex().equals(dataToPut)) {
-            detRes.setSex(body);
-        } else if (detRes.getEmail().equals(dataToPut)) {
-            detRes.setEmail(body);
-        } else if (detRes.getPhoneNumber().equals(dataToPut)) {
-            detRes.setPhoneNumber(body);
-        } else if (String.valueOf(detRes.getAge()).equals(dataToPut)) {
-            detRes.setAge(Integer.parseInt(body));
-        } else {
-            return Response.ok().entity(gson.toJson(noResult)).build();
+    public Response put(@PathParam("keyword") String keyword,@PathParam("dataToPut") String dataToPut, String body) {
+        Member detRes=detect(keyword);
+        switch (dataToPut){
+            case "name":
+                detRes.setName(body);
+                break;
+            case "sex":
+                detRes.setSex(body);
+                break;
+            case "age":
+                detRes.setAge(Integer.parseInt(body));
+                break;
+            case "email":
+                detRes.setEmail(body);
+                break;
+            case "phoneNumber":
+                detRes.setPhoneNumber(body);
+                break;
+            default:
+                return Response.ok().entity(gson.toJson(noResult)).build();
         }
         return Response.ok().entity(gson.toJson(detRes)).build();
     }
