@@ -11,8 +11,8 @@ import java.util.List;
 
 @Path("data")
 public class DataApi {
-    private volatile List<Members> user = new ArrayList<Members>();
-    private Gson gson = new Gson();
+    private static volatile List<Members> user = new ArrayList<Members>();
+    private static Gson gson = new Gson();
     private Answer noResult = new Answer("查無此人");
     private Answer yesResult = new Answer("成功");
 
@@ -63,7 +63,7 @@ public class DataApi {
         }
     }
 
-    private int detect(String key) {
+    private static int detect(String key) {
 
         for (int numberOfIndex = 0; numberOfIndex < user.size(); numberOfIndex++) {
             if (user.get(numberOfIndex).getPhoneNumber().equals(key) || user.get(numberOfIndex).getName().equals(key) || user.get(numberOfIndex).getEmail().equals(key)) {
