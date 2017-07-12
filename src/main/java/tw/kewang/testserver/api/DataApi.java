@@ -11,38 +11,29 @@ import java.util.List;
 
 @Path("data")
 public class DataApi {
-    static volatile List<members> user = new ArrayList<members>();
-    static volatile List<answer> response = new ArrayList<answer>();
-    static int resNm = -1;
+    private static volatile List<members> user = new ArrayList<members>();
+    private static Gson gson = new Gson();
+    private answer noResult = new answer("查無此人");
+    private answer yesResult = new answer("成功");
 
     @Produces("application/json")
     @POST
     public Response post(String body) {
-        String recieve = body;
-        Gson gson = new Gson();
-        members mem = gson.fromJson(recieve, members.class);
+        members mem = gson.fromJson(body, members.class);
         user.add(mem);
         System.out.println(gson.toJson(mem));
-        answer a1 = new answer("OK");
-        response.add(a1);
-        resNm += 1;
-        return Response.ok().entity(gson.toJson(response.get(resNm))).build();
+        return Response.ok().entity(gson.toJson(yesResult)).build();
     }
 
-    static int num = 0;
 
     @Path("{keywordGet}")
     @GET
     public Response get(@Context HttpHeaders headers, @PathParam("keywordGet") String keyword) {
-        Gson gson = new Gson();
-        if (detect(keyword)) {
-            String jsonStr = gson.toJson(user.get(num));
+        if (detect(keyword)!=-1) {
+            String jsonStr = gson.toJson(user.get(detect(keyword)));
             return Response.ok().entity(jsonStr).build();
         } else {
-            answer a1 = new answer("查無此人");
-            response.add(a1);
-            resNm += 1;
-            return Response.ok().entity(gson.toJson(response.get(resNm))).build();
+            return Response.ok().entity(gson.toJson(noResult)).build();
 
         }
     }
@@ -50,18 +41,11 @@ public class DataApi {
     @Path("{keywordDel}")
     @DELETE
     public Response del(@Context HttpHeaders headers, @PathParam("keywordDel") String keyword) {
-        Gson gson = new Gson();
-        if (detect(keyword)) {
-            user.remove(num);
-            answer a1 = new answer("已成功移除資料");
-            response.add(a1);
-            resNm += 1;
-            return Response.ok().entity(gson.toJson(response.get(resNm))).build();
+        if (detect(keyword)!=-1) {
+            user.remove(detect(keyword));
+            return Response.ok().entity(gson.toJson(yesResult)).build();
         } else {
-            answer a1 = new answer("查無此人");
-            response.add(a1);
-            resNm += 1;
-            return Response.ok().entity(gson.toJson(response.get(resNm))).build();
+            return Response.ok().entity(gson.toJson(noResult)).build();
         }
     }
 
@@ -69,30 +53,24 @@ public class DataApi {
     @Path("{keywordPut}")
     @PUT
     public Response PUT(@Context HttpHeaders headers, @PathParam("keywordPut") String keyword, String body) {
-        Gson gson = new Gson();
-        if (detect(keyword)) {
+        int detRes = detect(keyword);
+        if (detRes!=-1) {
             members newstr = gson.fromJson(body, members.class);
-            user.set(num, newstr);
-            answer a1 = new answer("更新成功!");
-            response.add(a1);
-            resNm += 1;
-            return Response.ok().entity(gson.toJson(response.get(resNm)) + "\n" + gson.toJson(user.get(num))).build();
+            user.set(detRes, newstr);
+            return Response.ok().entity((gson.toJson(yesResult)) + "\n" + gson.toJson(user.get(detRes))).build();
         } else {
-            answer a1 = new answer("查無此人");
-            response.add(a1);
-            resNm += 1;
-            return Response.ok().entity(gson.toJson(response.get(resNm))).build();
+            return Response.ok().entity(gson.toJson(noResult)).build();
         }
     }
 
-    static boolean detect(String key) {
+    private static int detect(String key) {
 
-        for (num = 0; num < user.size(); num++) {
-            if (user.get(num).getPhoneNumber().equals(key) || user.get(num).getName().equals(key) || user.get(num).getEmail().equals(key)) {
-                return true;
+        for (int numberOfIndex = 0; numberOfIndex < user.size(); numberOfIndex++) {
+            if (user.get(numberOfIndex).getPhoneNumber().equals(key) || user.get(numberOfIndex).getName().equals(key) || user.get(numberOfIndex).getEmail().equals(key)) {
+                return numberOfIndex;
             }
         }
-        return false;
+        return -1;
     }
 
 
