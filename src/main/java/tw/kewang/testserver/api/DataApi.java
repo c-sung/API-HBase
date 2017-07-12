@@ -11,15 +11,15 @@ import java.util.List;
 
 @Path("data")
 public class DataApi {
-    private static volatile List<members> user = new ArrayList<members>();
-    private static Gson gson = new Gson();
-    private answer noResult = new answer("查無此人");
-    private answer yesResult = new answer("成功");
+    private volatile List<Members> user = new ArrayList<Members>();
+    private Gson gson = new Gson();
+    private Answer noResult = new Answer("查無此人");
+    private Answer yesResult = new Answer("成功");
 
     @Produces("application/json")
     @POST
     public Response post(String body) {
-        members mem = gson.fromJson(body, members.class);
+        Members mem = gson.fromJson(body, Members.class);
         user.add(mem);
         System.out.println(gson.toJson(mem));
         return Response.ok().entity(gson.toJson(yesResult)).build();
@@ -52,10 +52,10 @@ public class DataApi {
 
     @Path("{keywordPut}")
     @PUT
-    public Response PUT(@Context HttpHeaders headers, @PathParam("keywordPut") String keyword, String body) {
+    public Response put(@Context HttpHeaders headers, @PathParam("keywordPut") String keyword, String body) {
         int detRes = detect(keyword);
         if (detRes!=-1) {
-            members newstr = gson.fromJson(body, members.class);
+            Members newstr = gson.fromJson(body, Members.class);
             user.set(detRes, newstr);
             return Response.ok().entity((gson.toJson(yesResult)) + "\n" + gson.toJson(user.get(detRes))).build();
         } else {
@@ -63,7 +63,7 @@ public class DataApi {
         }
     }
 
-    private static int detect(String key) {
+    private int detect(String key) {
 
         for (int numberOfIndex = 0; numberOfIndex < user.size(); numberOfIndex++) {
             if (user.get(numberOfIndex).getPhoneNumber().equals(key) || user.get(numberOfIndex).getName().equals(key) || user.get(numberOfIndex).getEmail().equals(key)) {
@@ -74,7 +74,7 @@ public class DataApi {
     }
 
 
-    public class members {
+    public class Members {
         private String name;
         private String sex;
         private String phoneNumber;
@@ -121,7 +121,7 @@ public class DataApi {
             this.age = age;
         }
 
-        public members(String _name, String _sex, int _age, String _phoneNumber, String _email) {
+        public Members(String _name, String _sex, int _age, String _phoneNumber, String _email) {
             name = _name;
             sex = _sex;
             age = _age;
@@ -130,7 +130,7 @@ public class DataApi {
         }
     }
 
-    public class answer {
+    public class Answer {
         private String ans;
 
         public String getAns() {
@@ -141,7 +141,7 @@ public class DataApi {
             this.ans = ans;
         }
 
-        public answer(String _ans) {
+        public Answer(String _ans) {
             ans = _ans;
         }
     }
