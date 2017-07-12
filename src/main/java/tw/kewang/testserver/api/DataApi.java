@@ -11,7 +11,7 @@ import java.util.List;
 
 @Path("data")
 public class DataApi {
-    private static volatile List<Members> user = new ArrayList<Members>();
+    private static volatile List<Members> members = new ArrayList<Members>();
     private static Gson gson = new Gson();
     private Answer noResult = new Answer("查無此人");
     private Answer yesResult = new Answer("成功");
@@ -20,7 +20,7 @@ public class DataApi {
     @POST
     public Response post(String body) {
         Members mem = gson.fromJson(body, Members.class);
-        user.add(mem);
+        members.add(mem);
         System.out.println(gson.toJson(mem));
         return Response.ok().entity(gson.toJson(yesResult)).build();
     }
@@ -30,7 +30,7 @@ public class DataApi {
     @GET
     public Response get(@Context HttpHeaders headers, @PathParam("keywordGet") String keyword) {
         if (detect(keyword)!=-1) {
-            String jsonStr = gson.toJson(user.get(detect(keyword)));
+            String jsonStr = gson.toJson(members.get(detect(keyword)));
             return Response.ok().entity(jsonStr).build();
         } else {
             return Response.ok().entity(gson.toJson(noResult)).build();
@@ -42,7 +42,7 @@ public class DataApi {
     @DELETE
     public Response del(@Context HttpHeaders headers, @PathParam("keywordDel") String keyword) {
         if (detect(keyword)!=-1) {
-            user.remove(detect(keyword));
+            members.remove(detect(keyword));
             return Response.ok().entity(gson.toJson(yesResult)).build();
         } else {
             return Response.ok().entity(gson.toJson(noResult)).build();
@@ -56,8 +56,8 @@ public class DataApi {
         int detRes = detect(keyword);
         if (detRes!=-1) {
             Members newstr = gson.fromJson(body, Members.class);
-            user.set(detRes, newstr);
-            return Response.ok().entity((gson.toJson(yesResult)) + "\n" + gson.toJson(user.get(detRes))).build();
+            members.set(detRes, newstr);
+            return Response.ok().entity((gson.toJson(yesResult)) + "\n" + gson.toJson(members.get(detRes))).build();
         } else {
             return Response.ok().entity(gson.toJson(noResult)).build();
         }
@@ -65,8 +65,8 @@ public class DataApi {
 
     private static int detect(String key) {
 
-        for (int numberOfIndex = 0; numberOfIndex < user.size(); numberOfIndex++) {
-            if (user.get(numberOfIndex).getPhoneNumber().equals(key) || user.get(numberOfIndex).getName().equals(key) || user.get(numberOfIndex).getEmail().equals(key)) {
+        for (int numberOfIndex = 0; numberOfIndex < members.size(); numberOfIndex++) {
+            if (members.get(numberOfIndex).getPhoneNumber().equals(key) || members.get(numberOfIndex).getName().equals(key) || members.get(numberOfIndex).getEmail().equals(key)) {
                 return numberOfIndex;
             }
         }
@@ -121,12 +121,12 @@ public class DataApi {
             this.age = age;
         }
 
-        public Members(String _name, String _sex, int _age, String _phoneNumber, String _email) {
-            name = _name;
-            sex = _sex;
-            age = _age;
-            phoneNumber = _phoneNumber;
-            email = _email;
+        public Members(String name, String sex, int age, String phoneNumber, String email) {
+            this.name = name;
+            this.sex = sex;
+            this.age = age;
+            this.phoneNumber = phoneNumber;
+            this.email = email;
         }
     }
 
