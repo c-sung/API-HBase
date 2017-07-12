@@ -3,8 +3,6 @@ package tw.kewang.testserver.api;
 import com.google.gson.Gson;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,25 +11,24 @@ import java.util.List;
 public class DataApi {
     private static volatile List<Member> members = new ArrayList<>();
     private final Gson gson = new Gson();
-    private final Answer noResult = new Answer("查無此人");
-    private final Answer yesResult = new Answer("成功");
+    private final Answer noResult = new Answer("not found");
 
-    @Produces("application/json")
     @POST
     public Response post(String body) {
         Member mem = gson.fromJson(body, Member.class);
+        mem.setAns("OK");
         members.add(mem);
         System.out.println(gson.toJson(mem));
-        return Response.ok().entity(gson.toJson(yesResult)).build();
+        return Response.ok().entity(gson.toJson(mem.getAns())).build();
     }
 
 
     @Path("{keyword}")
     @GET
-    public Response get(@Context HttpHeaders headers, @PathParam("keyword") String keyword) {
-        int detRes = detect(keyword);
-        if (detRes!=-1) {
-            String jsonStr = gson.toJson(members.get(detRes));
+    public Response get(@PathParam("keyword") String keyword) {
+        Member detRes = detect(keyword);
+        if (detRes != null) {
+            String jsonStr = gson.toJson(detRes);
             return Response.ok().entity(jsonStr).build();
         } else {
             return Response.ok().entity(gson.toJson(noResult)).build();
@@ -41,38 +38,45 @@ public class DataApi {
 
     @Path("{keyword}")
     @DELETE
-    public Response del(@Context HttpHeaders headers, @PathParam("keyword") String keyword) {
-        if (detect(keyword)!=-1) {
+    public Response del(@PathParam("keyword") String keyword) {
+        Member detRes = detect(keyword);
+        if (detRes != null) {
             members.remove(detect(keyword));
-            return Response.ok().entity(gson.toJson(yesResult)).build();
+            return Response.ok().entity(gson.toJson("ok")).build();
         } else {
             return Response.ok().entity(gson.toJson(noResult)).build();
         }
     }
 
-
-    @Path("{keyword}")
+    @Path("{keyword}/{dataToPut}")
     @PUT
-    public Response put(@Context HttpHeaders headers, @PathParam("keyword") String keyword, String body) {
-        int detRes = detect(keyword);
-        if (detRes!=-1) {
-            Member newstr = gson.fromJson(body, Member.class);
-            members.set(detRes, newstr);
-            return Response.ok().entity((gson.toJson(yesResult))).build();
+    public Response put(@PathParam("keyword") String keyword, @PathParam("keyword") String dataToPut, String body) {
+        Member detRes = detect(keyword);
+        if (detRes.getName().equals(dataToPut)) {
+            detRes.setName(body);
+        } else if (detRes.getSex().equals(dataToPut)) {
+            detRes.setSex(body);
+        } else if (detRes.getEmail().equals(dataToPut)) {
+            detRes.setEmail(body);
+        } else if (detRes.getPhoneNumber().equals(dataToPut)) {
+            detRes.setPhoneNumber(body);
+        } else if (String.valueOf(detRes.getAge()).equals(dataToPut)) {
+            detRes.setAge(Integer.parseInt(body));
         } else {
             return Response.ok().entity(gson.toJson(noResult)).build();
         }
+        return Response.ok().entity(gson.toJson(detRes)).build();
     }
 
-    private static int detect(String key) {
+    private static Member detect(String key) {
 
         for (int numberOfIndex = 0; numberOfIndex < members.size(); numberOfIndex++) {
             Member memGet = members.get(numberOfIndex);
             if (memGet.getPhoneNumber().equals(key) || memGet.getName().equals(key) || memGet.getEmail().equals(key)) {
-                return numberOfIndex;
+                return memGet;
             }
         }
-        return -1;
+        return null;
     }
 
 
@@ -82,6 +86,7 @@ public class DataApi {
         private String phoneNumber;
         private String email;
         private int age;
+        private String ans;
 
         public String getName() {
             return name;
@@ -123,12 +128,21 @@ public class DataApi {
             this.age = age;
         }
 
-        public Member(String name, String sex, int age, String phoneNumber, String email) {
+        public String getAns() {
+            return ans;
+        }
+
+        public void setAns(String ans) {
+            this.ans = ans;
+        }
+
+        public Member(String name, String sex, int age, String phoneNumber, String email, String ans) {
             this.name = name;
             this.sex = sex;
             this.age = age;
             this.phoneNumber = phoneNumber;
             this.email = email;
+            this.ans = ans;
         }
     }
 
