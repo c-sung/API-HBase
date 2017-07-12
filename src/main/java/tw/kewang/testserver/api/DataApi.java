@@ -11,26 +11,27 @@ import java.util.List;
 
 @Path("data")
 public class DataApi {
-    private static volatile List<Members> members = new ArrayList<Members>();
-    private static Gson gson = new Gson();
-    private Answer noResult = new Answer("查無此人");
-    private Answer yesResult = new Answer("成功");
+    private static volatile List<Member> members = new ArrayList<>();
+    private final Gson gson = new Gson();
+    private final Answer noResult = new Answer("查無此人");
+    private final Answer yesResult = new Answer("成功");
 
     @Produces("application/json")
     @POST
     public Response post(String body) {
-        Members mem = gson.fromJson(body, Members.class);
+        Member mem = gson.fromJson(body, Member.class);
         members.add(mem);
         System.out.println(gson.toJson(mem));
         return Response.ok().entity(gson.toJson(yesResult)).build();
     }
 
 
-    @Path("{keywordGet}")
+    @Path("{keyword}")
     @GET
-    public Response get(@Context HttpHeaders headers, @PathParam("keywordGet") String keyword) {
-        if (detect(keyword)!=-1) {
-            String jsonStr = gson.toJson(members.get(detect(keyword)));
+    public Response get(@Context HttpHeaders headers, @PathParam("keyword") String keyword) {
+        int detRes = detect(keyword);
+        if (detRes!=-1) {
+            String jsonStr = gson.toJson(members.get(detRes));
             return Response.ok().entity(jsonStr).build();
         } else {
             return Response.ok().entity(gson.toJson(noResult)).build();
@@ -38,9 +39,9 @@ public class DataApi {
         }
     }
 
-    @Path("{keywordDel}")
+    @Path("{keyword}")
     @DELETE
-    public Response del(@Context HttpHeaders headers, @PathParam("keywordDel") String keyword) {
+    public Response del(@Context HttpHeaders headers, @PathParam("keyword") String keyword) {
         if (detect(keyword)!=-1) {
             members.remove(detect(keyword));
             return Response.ok().entity(gson.toJson(yesResult)).build();
@@ -50,14 +51,14 @@ public class DataApi {
     }
 
 
-    @Path("{keywordPut}")
+    @Path("{keyword}")
     @PUT
-    public Response put(@Context HttpHeaders headers, @PathParam("keywordPut") String keyword, String body) {
+    public Response put(@Context HttpHeaders headers, @PathParam("keyword") String keyword, String body) {
         int detRes = detect(keyword);
         if (detRes!=-1) {
-            Members newstr = gson.fromJson(body, Members.class);
+            Member newstr = gson.fromJson(body, Member.class);
             members.set(detRes, newstr);
-            return Response.ok().entity((gson.toJson(yesResult)) + "\n" + gson.toJson(members.get(detRes))).build();
+            return Response.ok().entity((gson.toJson(yesResult))).build();
         } else {
             return Response.ok().entity(gson.toJson(noResult)).build();
         }
@@ -66,7 +67,8 @@ public class DataApi {
     private static int detect(String key) {
 
         for (int numberOfIndex = 0; numberOfIndex < members.size(); numberOfIndex++) {
-            if (members.get(numberOfIndex).getPhoneNumber().equals(key) || members.get(numberOfIndex).getName().equals(key) || members.get(numberOfIndex).getEmail().equals(key)) {
+            Member memGet = members.get(numberOfIndex);
+            if (memGet.getPhoneNumber().equals(key) || memGet.getName().equals(key) || memGet.getEmail().equals(key)) {
                 return numberOfIndex;
             }
         }
@@ -74,7 +76,7 @@ public class DataApi {
     }
 
 
-    public class Members {
+    public class Member {
         private String name;
         private String sex;
         private String phoneNumber;
@@ -121,7 +123,7 @@ public class DataApi {
             this.age = age;
         }
 
-        public Members(String name, String sex, int age, String phoneNumber, String email) {
+        public Member(String name, String sex, int age, String phoneNumber, String email) {
             this.name = name;
             this.sex = sex;
             this.age = age;
@@ -141,8 +143,8 @@ public class DataApi {
             this.ans = ans;
         }
 
-        public Answer(String _ans) {
-            ans = _ans;
+        public Answer(String ans) {
+            this.ans = ans;
         }
     }
 
