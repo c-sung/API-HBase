@@ -9,33 +9,33 @@ import java.util.List;
 
 @Path("data")
 public class DataApi {
-    private static volatile List<Result> results = new ArrayList<>();
+    private static volatile List<Result.Member> members = new ArrayList<>();
     private final Gson gson = new Gson();
-    private final Result.Answer noResult = new Result.Answer("not found");
-    private final Result.Answer yesResult = new Result.Answer("OK");
 
     @POST
     public Response post(String body) {
         Result res = new Result();
         Result.Member mem = gson.fromJson(body, Result.Member.class);
-        res.setMem1(mem);
-        results.add(res);
+        res.setMember(mem);
+        members.add(res.getMember());
         System.out.println(gson.toJson(mem));
-        return Response.ok().entity(gson.toJson(yesResult)).build();
+        return Response.ok().entity(gson.toJson(mem)).build();
     }
 
 
     @Path("{keyword}")
     @GET
     public Response get(@PathParam("keyword") String keyword) {
-        Result detRes = detect(keyword);
+        Result.Member detRes = detect(keyword);
+        Result res = new Result();
+        res.setMember(detRes);
+        res.setAns("NO");
         if (detRes != null) {
-            detRes.setAns(yesResult);
-            System.out.println(detRes);
-            String jsonStr = gson.toJson(detRes);
+            res.setAns("OK");
+            String jsonStr = gson.toJson(res);
             return Response.ok().entity(jsonStr).build();
         } else {
-            return Response.ok().entity(gson.toJson(noResult)).build();
+            return Response.ok().entity(gson.toJson(res)).build();
 
         }
     }
@@ -43,68 +43,86 @@ public class DataApi {
     @Path("{keyword}")
     @DELETE
     public Response del(@PathParam("keyword") String keyword) {
-        Result detRes = detect(keyword);
+        Result.Member detRes = detect(keyword);
+        Result res = new Result();
+        res.setAns("OK");
         if (detRes != null) {
-            detRes.setAns(yesResult);
-            results.remove(detect(keyword));
-            return Response.ok().entity(gson.toJson(yesResult)).build();
+            members.remove(detect(keyword));
         } else {
-            return Response.ok().entity(gson.toJson(noResult)).build();
+            res.setAns("NO");
         }
+        return Response.ok().entity(gson.toJson(res)).build();
     }
 
     @Path("{keyword}/{dataToPut}")
     @PUT
-    public Response put(@PathParam("keyword") String keyword,@PathParam("dataToPut") String dataToPut, String body) {
-        Result detRes=detect(keyword);
-        switch (dataToPut){
+    public Response put(@PathParam("keyword") String keyword, @PathParam("dataToPut") String dataToPut, String body) {
+        Result.Member detRes = detect(keyword);
+        Result res = new Result();
+        if (detRes == null) {
+            res.setAns("NO");
+            return Response.ok().entity(gson.toJson(res)).build();
+        }
+        switch (dataToPut) {
             case "name":
-                detRes.getMem1().setName(body);
+                detRes.setName(body);
+                res.setMember(detRes);
                 break;
             case "sex":
-                detRes.getMem1().setSex(body);
+                detRes.setSex(body);
+                res.setMember(detRes);
                 break;
             case "age":
-                detRes.getMem1().setAge(Integer.parseInt(body));
+                detRes.setAge(Integer.parseInt(body));
+                res.setMember(detRes);
                 break;
             case "email":
-                detRes.getMem1().setEmail(body);
+                detRes.setEmail(body);
+                res.setMember(detRes);
                 break;
             case "phoneNumber":
-                detRes.getMem1().setPhoneNumber(body);
+                detRes.setPhoneNumber(body);
+                res.setMember(detRes);
                 break;
             default:
-                return Response.ok().entity(gson.toJson(noResult)).build();
+                res.setAns("NO");
+                return Response.ok().entity(gson.toJson(res)).build();
         }
-        return Response.ok().entity(gson.toJson(detRes)).build();
+        res.setAns("OK");
+        return Response.ok().entity(gson.toJson(res)).build();
     }
 
-    private static Result detect(String key) {
+    private static Result.Member detect(String key) {
 
-        for (int numberOfIndex = 0; numberOfIndex < results.size(); numberOfIndex++) {
-            Result memGet = results.get(numberOfIndex);
-            if (memGet.getMem1().getPhoneNumber().equals(key) || memGet.getMem1().getName().equals(key) || memGet.getMem1().getEmail().equals(key)) {
+        for (int numberOfIndex = 0; numberOfIndex < members.size(); numberOfIndex++) {
+            Result.Member memGet = members.get(numberOfIndex);
+            if (memGet.getPhoneNumber().equals(key) || memGet.getName().equals(key) || memGet.getEmail().equals(key)) {
                 return memGet;
             }
         }
         return null;
     }
 
-    public static class Result{
-        private Member mem1;
-        private Answer ans;
-        public Member getMem1(){
-            return mem1;
+    public static class Result {
+        private Member member;
+        private String ans;
+
+        public Member getMember() {
+            return member;
         }
-        public void setMem1(Member mem1){
-            this.mem1=mem1;
+
+        public void setMember(Member member) {
+            this.member = member;
         }
-        public Answer getAns(){
+
+        public String getAns() {
             return ans;
         }
-        public void setAns(Answer ans){
-            this.ans=ans;
+
+        public void setAns(String ans) {
+            this.ans = ans;
         }
+
         private class Member {
             private String name;
             private String sex;
@@ -162,21 +180,7 @@ public class DataApi {
             }
         }
 
-        static class Answer {
-            private String ans;
 
-            public String getAns() {
-                return ans;
-            }
-
-            public void setAns(String ans) {
-                this.ans = ans;
-            }
-
-            public Answer(String ans) {
-                this.ans = ans;
-            }
-        }
     }
 
 
