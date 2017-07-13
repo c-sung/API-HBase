@@ -26,6 +26,7 @@ public class DataApi {
     @Path("{keyword}")
     @GET
     public Response get(@PathParam("keyword") String keyword) {
+        System.out.println("Someone tried to access this server.");
         Member detRes = detect(keyword);
         Result res = new Result();
         if (detRes != null) {
@@ -46,10 +47,10 @@ public class DataApi {
         Result res = new Result();
         if (detRes != null) {
             members.remove(detRes);
+            res.setAns("OK");
         } else {
             res.setAns("NO");
         }
-        res.setAns("OK");
         return Response.ok().entity(gson.toJson(res)).build();
     }
 
