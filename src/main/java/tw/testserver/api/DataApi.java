@@ -1,30 +1,28 @@
-package tw.kewang.testserver.api;
+package tw.testserver.api;
 
 import com.google.gson.Gson;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
-import tw.kewang.testserver.Main;
+import tw.testserver.Main;
 
 import java.io.IOException;
 import java.util.Objects;
 
 @Path("data")
 public class DataApi {
-    private static volatile List<Member> members = new ArrayList<>();
     private final Gson gson = new Gson();
+    private Result res = new Result();
 
     @POST
     public Response post(String body) throws IOException {
         Member mem = gson.fromJson(body, Member.class);
-        HBaseConnect("post", mem, "",null);
+        hbaseConnect("post", mem, "", null);
         System.out.println(gson.toJson(mem));
         return Response.ok().entity(gson.toJson(mem)).build();
     }
@@ -33,10 +31,10 @@ public class DataApi {
     @Path("{keyword}")
     @GET
     public Response get(@PathParam("keyword") String keyword) {
-        Result res = new Result();
+
         org.apache.hadoop.hbase.client.Result getBack = null;
         try {
-            getBack = HBaseConnect("get", null, keyword,null);
+            getBack = hbaseConnect("get", null, keyword, null);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -45,7 +43,6 @@ public class DataApi {
         byte[] valSex = getBack.getValue(Bytes.toBytes("people"), Bytes.toBytes("sex"));
         byte[] valPhoneNumber = getBack.getValue(Bytes.toBytes("people"), Bytes.toBytes("phoneNumber"));
         byte[] valEmail = getBack.getValue(Bytes.toBytes("people"), Bytes.toBytes("email"));
-        System.out.println(Bytes.toString(valName));
         if (!Objects.equals(Bytes.toString(valName), null)) {
             Member mem = new Member("", "", 0, "", "");
             mem.setName(Bytes.toString(valName));
@@ -69,11 +66,10 @@ public class DataApi {
     public Response del(@PathParam("keyword") String keyword) {
         System.out.println("OK1");
         try {
-            HBaseConnect("delete", null, keyword,null);
+            hbaseConnect("delete", null, keyword, null);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Result res = new Result();
         res.setAns("OK");
         return Response.ok().entity(gson.toJson(res)).build();
     }
@@ -82,48 +78,65 @@ public class DataApi {
     @PUT
     public Response put(@PathParam("keyword") String keyword, @PathParam("dataToPut") String dataToPut, String body) {
         Put put = new Put(Bytes.toBytes(keyword));
-        put.add(Bytes.toBytes("people"),Bytes.toBytes(dataToPut),Bytes.toBytes(body));
+        put.add(Bytes.toBytes("people"), Bytes.toBytes(dataToPut), Bytes.toBytes(body));
         try {
-            HBaseConnect("put",null,keyword,put);
+            hbaseConnect("put", null, keyword, put);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Result res = new Result();
         res.setAns("OK");
         return Response.ok().entity(gson.toJson(res)).build();
     }
-
-    private static Member detect(String key) {
-
-        for (int numberOfIndex = 0; numberOfIndex < members.size(); numberOfIndex++) {
-            Member memGet = members.get(numberOfIndex);
-            if (memGet.getPhoneNumber().equals(key) || memGet.getName().equals(key) || memGet.getEmail().equals(key)) {
-                return memGet;
+    @Path("{startRow}/{stopRow}")
+    @GET
+    public Response scan(@PathParam("startRow") String startRow,@PathParam("stopRow") String stopRow) throws IOException {
+        Configuration hBaseConfig = HBaseConfiguration.create();
+        String output = "";
+        hBaseConfig.set("hbase.zookeeper.quorum", "nqmi26");
+        HTable table = new HTable(hBaseConfig, "Member");
+        try {
+            Scan scan = new Scan();
+            scan.addFamily(Bytes.toBytes("people"));
+            scan.setStartRow(Bytes.toBytes(startRow));
+            scan.setStopRow(Bytes.toBytes(stopRow));
+            ResultScanner scanner = table.getScanner(scan);
+            for(org.apache.hadoop.hbase.client.Result result : scanner){
+                output=output+result+"\n";
             }
+            scanner.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return null;
+
+        return Response.ok().entity(output).build();
+
     }
+    public org.apache.hadoop.hbase.client.Result hbaseConnect(String input, Member inputMember, String rowKey, Put inputPut) throws IOException {
 
-    public org.apache.hadoop.hbase.client.Result HBaseConnect(String input, Member inputMember, String rowKey,Put inputPut) throws IOException {
-
-        System.out.println("Trying to establish HBase connection...");
         Configuration hBaseConfig = HBaseConfiguration.create();
         hBaseConfig.set("hbase.zookeeper.quorum", "nqmi26");
-        System.out.println("HBase Connection succeded...");
         HTable table = new HTable(hBaseConfig, "Member");
-        if (input.equals("post")) {
-            table.put(postH(inputMember.getName(), String.valueOf(inputMember.getAge()), inputMember.getSex(), inputMember.getPhoneNumber(), inputMember.getEmail()));
-            table.close();
-        } else if (input.equals("get")) {
-            Get getIn = getH(rowKey);
-            org.apache.hadoop.hbase.client.Result resName = table.get(getIn);
-            return resName;
-        } else if (input.equals("put")) {
-            table.put(inputPut);
-        } else if (input.equals("delete")) {
-            Delete delH = new Delete(Bytes.toBytes(rowKey));
-            table.delete(delH);
-            table.close();
+        org.apache.hadoop.hbase.client.Result checkRow = table.getRowOrBefore(Bytes.toBytes("32767"),Bytes.toBytes("people"));
+        Main.row=Integer.parseInt(Bytes.toString(checkRow.getRow()));
+        switch (input) {
+            case "post":
+                table.put(postH(inputMember.getName(), String.valueOf(inputMember.getAge()), inputMember.getSex(), inputMember.getPhoneNumber(), inputMember.getEmail()));
+                table.close();
+                break;
+            case "get":
+                Get getIn = getH(rowKey);
+                org.apache.hadoop.hbase.client.Result resName = table.get(getIn);
+                table.close();
+                return resName;
+            case "put":
+                table.put(inputPut);
+                table.close();
+                break;
+            case "delete":
+                Delete delH = new Delete(Bytes.toBytes(rowKey));
+                table.delete(delH);
+                table.close();
+                break;
         }
         return null;
     }

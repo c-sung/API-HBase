@@ -1,4 +1,4 @@
-package tw.kewang.testserver.api;
+package tw.testserver.api;
 
 public class Member {
 
