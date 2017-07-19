@@ -12,6 +12,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import tw.testserver.Main;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Objects;
 
 @Path("data")
@@ -54,7 +55,6 @@ public class DataApi {
             res.setAns("OK");
             res.setMember(mem);
             System.out.println(gson.toJson(res));
-            return Response.ok().entity(gson.toJson(res)).build();
         } else {
             res.setAns("NO");
         }
@@ -87,43 +87,59 @@ public class DataApi {
         res.setAns("OK");
         return Response.ok().entity(gson.toJson(res)).build();
     }
+
     @Path("{startRow}/{stopRow}")
     @GET
-    public Response scan(@PathParam("startRow") String startRow,@PathParam("stopRow") String stopRow) throws IOException {
-        Configuration hBaseConfig = HBaseConfiguration.create();
-        String output = "";
-        hBaseConfig.set("hbase.zookeeper.quorum", "nqmi26");
-        HTable table = new HTable(hBaseConfig, "Member");
-        try {
-            Scan scan = new Scan();
-            scan.addFamily(Bytes.toBytes("people"));
-            scan.setStartRow(Bytes.toBytes(startRow));
-            scan.setStopRow(Bytes.toBytes(stopRow));
-            ResultScanner scanner = table.getScanner(scan);
-            for(org.apache.hadoop.hbase.client.Result result : scanner){
-                output=output+result+"\n";
+    public Response scan(@PathParam("startRow") String startRow, @PathParam("stopRow") String stopRow) throws IOException {
+        org.apache.hadoop.hbase.client.Result getBack = null;
+        ArrayList<Result> results = new ArrayList<>();
+        for (int i = Integer.parseInt(startRow); i < Integer.parseInt(stopRow); i++) {
+            getBack = hbaseConnect("get", null, String.valueOf(i), null);
+            byte[] valName = getBack.getValue(Bytes.toBytes("people"), Bytes.toBytes("name"));
+            byte[] valAge = getBack.getValue(Bytes.toBytes("people"), Bytes.toBytes("age"));
+            byte[] valSex = getBack.getValue(Bytes.toBytes("people"), Bytes.toBytes("sex"));
+            byte[] valPhoneNumber = getBack.getValue(Bytes.toBytes("people"), Bytes.toBytes("phoneNumber"));
+            byte[] valEmail = getBack.getValue(Bytes.toBytes("people"), Bytes.toBytes("email"));
+            if (!Objects.equals(Bytes.toString(valName), null)) {
+                Member mem = new Member("", "", 0, "", "");
+                mem.setName(Bytes.toString(valName));
+                mem.setAge(Integer.parseInt(Bytes.toString(valAge)));
+                mem.setPhoneNumber(Bytes.toString(valPhoneNumber));
+                mem.setSex(Bytes.toString(valSex));
+                mem.setEmail(Bytes.toString(valEmail));
+                System.out.println(gson.toJson(mem));
+                res.setAns("OK");
+                res.setMember(mem);
+                System.out.println(gson.toJson(res));
+                results.add(res);
+            } else {
+                res.setAns("NO");
             }
-            scanner.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
-        return Response.ok().entity(output).build();
+        return Response.ok().entity(gson.toJson(results)).build();
 
     }
+
     public org.apache.hadoop.hbase.client.Result hbaseConnect(String input, Member inputMember, String rowKey, Put inputPut) throws IOException {
 
         Configuration hBaseConfig = HBaseConfiguration.create();
         hBaseConfig.set("hbase.zookeeper.quorum", "nqmi26");
         HTable table = new HTable(hBaseConfig, "Member");
-        org.apache.hadoop.hbase.client.Result checkRow = table.getRowOrBefore(Bytes.toBytes("32767"),Bytes.toBytes("people"));
-        Main.row=Integer.parseInt(Bytes.toString(checkRow.getRow()));
+        org.apache.hadoop.hbase.client.Result checkRow = table.getRowOrBefore(Bytes.toBytes("32767"), Bytes.toBytes("people"));
+        System.out.println(checkRow);
+        if (String.valueOf(checkRow).equals("null")) {
+            Main.row = 0;
+        } else {
+            Main.row = Integer.parseInt(Bytes.toString(checkRow.getRow()));
+        }
         switch (input) {
             case "post":
                 table.put(postH(inputMember.getName(), String.valueOf(inputMember.getAge()), inputMember.getSex(), inputMember.getPhoneNumber(), inputMember.getEmail()));
                 table.close();
                 break;
             case "get":
+                Main.row+=1;
                 Get getIn = getH(rowKey);
                 org.apache.hadoop.hbase.client.Result resName = table.get(getIn);
                 table.close();
