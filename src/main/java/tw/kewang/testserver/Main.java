@@ -10,8 +10,9 @@ import java.util.Properties;
 
 public class Main {
     private static final Properties SERVER_PROPS = System.getProperties();
-
+    public static int row=0;
     public static void main(String[] args) {
+        System.setProperty("hadoop.home.dir", "C:\\winutils\\");
         initialServer();
 
         while (true) {
