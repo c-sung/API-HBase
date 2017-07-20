@@ -45,12 +45,8 @@ public class DataApi {
         } else {
             res.setAns("NO");
         }
-
         return Response.ok().entity(GSON.toJson(res)).build();
-
-
     }
-
 
     @Path("{keyword}")
     @GET
@@ -137,12 +133,9 @@ public class DataApi {
                 resultArray.setAns("OK");
             } else {
                 res.setAns("NO");
-
             }
         }
-
         return Response.ok().entity(GSON.toJson(resultArray)).build();
-
     }
 
     private org.apache.hadoop.hbase.client.Result hbaseConnect(String input, Member inputMember, String rowKey, Put inputPut) throws IOException {
@@ -164,10 +157,8 @@ public class DataApi {
                 Delete delH = new Delete(Bytes.toBytes(rowKey));
                 table.delete(delH);
                 break;
-
         }
         table.close();
-
         return null;
     }
 
