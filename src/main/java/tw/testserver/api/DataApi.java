@@ -12,18 +12,17 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Objects;
 
 @Path("data")
 public class DataApi {
     private final Gson gson = new Gson();
     private Result res = new Result();
     Configuration hBaseConfig = HBaseConfiguration.create();
-    final byte[] People =Bytes.toBytes("People");
-    final byte[] Name =Bytes.toBytes("Name");
-    final byte[] Age =Bytes.toBytes("Age");
-    final byte[] Sex =Bytes.toBytes("Sex");
-    final byte[] Email =Bytes.toBytes("Email");
+    final byte[] People =Bytes.toBytes("people");
+    final byte[] Name =Bytes.toBytes("name");
+    final byte[] Age =Bytes.toBytes("age");
+    final byte[] Sex =Bytes.toBytes("sex");
+    final byte[] Email =Bytes.toBytes("email");
     final byte[] PN =Bytes.toBytes("phoneNumber");
 
     @Path("{rowKey}")
@@ -68,7 +67,7 @@ public class DataApi {
         byte[] valPhoneNumber = getBack.getValue(People, PN);
         byte[] valEmail = getBack.getValue(People, Email);
         if (Bytes.toString(valName)!="null") {
-            Member mem = new Member();
+            Member mem = new Member("","",0,"","");
             mem.setName(Bytes.toString(valName));
             mem.setAge(Integer.parseInt(Bytes.toString(valAge)));
             mem.setPhoneNumber(Bytes.toString(valPhoneNumber));
@@ -128,7 +127,7 @@ public class DataApi {
             byte[] valPhoneNumber = result.getValue(People, PN);
             byte[] valEmail = result.getValue(People, Email);
             if (Bytes.toString(valName)!=null) {
-                Member mem = new Member();
+                Member mem = new Member("","",0,"","");
                 mem.setName(Bytes.toString(valName));
                 mem.setAge(Integer.parseInt(Bytes.toString(valAge)));
                 mem.setPhoneNumber(Bytes.toString(valPhoneNumber));
