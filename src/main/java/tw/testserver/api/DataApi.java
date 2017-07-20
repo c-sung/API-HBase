@@ -14,15 +14,15 @@ import java.io.IOException;
 
 @Path("data")
 public class DataApi {
-    private final Gson GSON = new Gson();
+    private static final Gson GSON = new Gson();
     private Result res = new Result();
-    final Configuration hBaseConfig = HBaseConfiguration.create();
-    final byte[] PEOPLE = Bytes.toBytes("people");
-    final byte[] NAME = Bytes.toBytes("name");
-    final byte[] AGE = Bytes.toBytes("age");
-    final byte[] SEX = Bytes.toBytes("sex");
-    final byte[] EMAIL = Bytes.toBytes("email");
-    final byte[] PN = Bytes.toBytes("phoneNumber");
+    private static final Configuration hBaseConfig = HBaseConfiguration.create();
+    private static final byte[] PEOPLE = Bytes.toBytes("people");
+    private static final byte[] NAME = Bytes.toBytes("name");
+    private static final byte[] AGE = Bytes.toBytes("age");
+    private static final byte[] SEX = Bytes.toBytes("sex");
+    private static final byte[] EMAIL = Bytes.toBytes("email");
+    private static final byte[] PN = Bytes.toBytes("phoneNumber");
 
     @Path("{account}")
     @POST
@@ -132,7 +132,7 @@ public class DataApi {
                 resultArray.setMember(mem);
                 resultArray.setAns("OK");
             } else {
-                res.setAns("NO");
+                resultArray.setAns("NO");
             }
         }
         return Response.ok().entity(GSON.toJson(resultArray)).build();
