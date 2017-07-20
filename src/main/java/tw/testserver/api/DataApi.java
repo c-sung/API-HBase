@@ -11,23 +11,22 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 @Path("data")
 public class DataApi {
     private final Gson GSON = new Gson();
     private Result res = new Result();
-    Configuration hBaseConfig = HBaseConfiguration.create();
-    final byte[] PEOPLE =Bytes.toBytes("people");
-    final byte[] NAME =Bytes.toBytes("name");
-    final byte[] AGE =Bytes.toBytes("age");
-    final byte[] SEX =Bytes.toBytes("sex");
-    final byte[] EMAIL =Bytes.toBytes("email");
-    final byte[] PN =Bytes.toBytes("phoneNumber");
+    final Configuration hBaseConfig = HBaseConfiguration.create();
+    final byte[] PEOPLE = Bytes.toBytes("people");
+    final byte[] NAME = Bytes.toBytes("name");
+    final byte[] AGE = Bytes.toBytes("age");
+    final byte[] SEX = Bytes.toBytes("sex");
+    final byte[] EMAIL = Bytes.toBytes("email");
+    final byte[] PN = Bytes.toBytes("phoneNumber");
 
     @Path("{account}")
     @POST
-    public Response post( @PathParam("account") String account,String body) throws IOException {
+    public Response post(@PathParam("account") String account, String body) throws IOException {
         System.out.println(account);
         org.apache.hadoop.hbase.client.Result getBack = new org.apache.hadoop.hbase.client.Result();
         try {
@@ -37,13 +36,15 @@ public class DataApi {
         }
         byte[] valName = getBack.getValue(PEOPLE, NAME);
         System.out.println(Bytes.toString(valName));
-        if (Bytes.toString(valName)==null) {
+        if (Bytes.toString(valName) == null) {
             Member mem = GSON.fromJson(body, Member.class);
             hbaseConnect("post", mem, account, null);
             System.out.println(GSON.toJson(mem));
             res.setAns("OK");
             res.setMember(mem);
-        } else{res.setAns("NO");}
+        } else {
+            res.setAns("NO");
+        }
 
         return Response.ok().entity(GSON.toJson(res)).build();
 
@@ -66,8 +67,8 @@ public class DataApi {
         byte[] valSex = getBack.getValue(PEOPLE, SEX);
         byte[] valPhoneNumber = getBack.getValue(PEOPLE, PN);
         byte[] valEmail = getBack.getValue(PEOPLE, EMAIL);
-        if (Bytes.toString(valName)!="null") {
-            Member mem = new Member("","",0,"","");
+        if (Bytes.toString(valName) != null) {
+            Member mem = new Member();
             mem.setName(Bytes.toString(valName));
             mem.setAge(Integer.parseInt(Bytes.toString(valAge)));
             mem.setPhoneNumber(Bytes.toString(valPhoneNumber));
@@ -77,7 +78,6 @@ public class DataApi {
             res.setAns("OK");
             res.setMember(mem);
             System.out.println(GSON.toJson(res));
-            return Response.ok().entity(GSON.toJson(res)).build();
         } else {
             res.setAns("NO");
         }
@@ -101,7 +101,7 @@ public class DataApi {
     @PUT
     public Response put(@PathParam("keyword") String keyword, @PathParam("dataToPut") String dataToPut, String body) {
         Put put = new Put(Bytes.toBytes(keyword));
-        put.add(Bytes.toBytes("PEOPLE"), Bytes.toBytes(dataToPut), Bytes.toBytes(body));
+        put.add(PEOPLE, Bytes.toBytes(dataToPut), Bytes.toBytes(body));
         try {
             hbaseConnect("put", null, keyword, put);
         } catch (IOException e) {
@@ -114,34 +114,34 @@ public class DataApi {
     @Path("{startTime}/{stopTime}")
     @GET
     public Response scan(@PathParam("startTime") String startTime, @PathParam("stopTime") String stopTime) throws IOException {
-        ArrayList<Member> results = new ArrayList<>();
         Scan s = new Scan();
         hBaseConfig.set("hbase.zookeeper.quorum", "nqmi26");
         HTable table = new HTable(hBaseConfig, "Member");
-        s.setTimeRange(Long.parseLong(startTime),Long.parseLong(stopTime));
+        s.setTimeRange(Long.parseLong(startTime), Long.parseLong(stopTime));
         ResultScanner rs = table.getScanner(s);
-        for (org.apache.hadoop.hbase.client.Result result = rs.next();result!=null;result=rs.next()) {
+        ResultArray resultArray = new ResultArray();
+        for (org.apache.hadoop.hbase.client.Result result = rs.next(); result != null; result = rs.next()) {
             byte[] valName = result.getValue(PEOPLE, NAME);
             byte[] valAge = result.getValue(PEOPLE, AGE);
             byte[] valSex = result.getValue(PEOPLE, SEX);
             byte[] valPhoneNumber = result.getValue(PEOPLE, PN);
             byte[] valEmail = result.getValue(PEOPLE, EMAIL);
-            if (Bytes.toString(valName)!=null) {
-                Member mem = new Member("","",0,"","");
+            if (Bytes.toString(valName) != null) {
+                Member mem = new Member();
                 mem.setName(Bytes.toString(valName));
                 mem.setAge(Integer.parseInt(Bytes.toString(valAge)));
                 mem.setPhoneNumber(Bytes.toString(valPhoneNumber));
                 mem.setSex(Bytes.toString(valSex));
                 mem.setEmail(Bytes.toString(valEmail));
-                System.out.println(GSON.toJson(results));
-                results.add(mem);
+                resultArray.setMember(mem);
+                resultArray.setAns("OK");
             } else {
                 res.setAns("NO");
-                return Response.ok().entity(GSON.toJson(res)).build();
+
             }
         }
 
-        return Response.ok().entity(GSON.toJson(results)).build();
+        return Response.ok().entity(GSON.toJson(resultArray)).build();
 
     }
 
@@ -151,7 +151,7 @@ public class DataApi {
         HTable table = new HTable(hBaseConfig, "Member");
         switch (input) {
             case "post":
-                table.put(postH(inputMember.getName(), String.valueOf(inputMember.getAge()), inputMember.getSex(), inputMember.getPhoneNumber(), inputMember.getEmail(),rowKey));
+                table.put(postH(inputMember.getName(), String.valueOf(inputMember.getAge()), inputMember.getSex(), inputMember.getPhoneNumber(), inputMember.getEmail(), rowKey));
                 break;
             case "get":
                 Get getIn = getH(rowKey);
@@ -171,7 +171,7 @@ public class DataApi {
         return null;
     }
 
-    private Put postH(String inputName, String inputAge, String inputSex, String inputPhoneNumber, String inputEmail,String rowKey) {
+    private Put postH(String inputName, String inputAge, String inputSex, String inputPhoneNumber, String inputEmail, String rowKey) {
         Put input = new Put(Bytes.toBytes(rowKey));
 
         input.addColumn(PEOPLE, NAME, Bytes.toBytes(inputName));
