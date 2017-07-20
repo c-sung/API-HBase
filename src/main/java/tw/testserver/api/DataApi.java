@@ -134,9 +134,10 @@ public class DataApi {
                 mem.setPhoneNumber(Bytes.toString(valPhoneNumber));
                 mem.setSex(Bytes.toString(valSex));
                 mem.setEmail(Bytes.toString(valEmail));
-                res.setAns("OK");
-                res.setMember(mem);
-                results.add(res);
+                Result scanRes=new Result();
+                scanRes.setAns("OK");
+                scanRes.setMember(mem);
+                results.add(scanRes);
                 System.out.println(gson.toJson(results));
             } else {
                 res.setAns("NO");
