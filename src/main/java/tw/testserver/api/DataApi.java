@@ -113,17 +113,20 @@ public class DataApi {
     }
 
     @Path("{startRow}/{stopRow}")
-    @HEAD
+    @GET
     public Response scan(@PathParam("startRow") String startRow, @PathParam("stopRow") String stopRow) throws IOException {
-        org.apache.hadoop.hbase.client.Result getBack = null;
         ArrayList<Result> results = new ArrayList<>();
-        for (int i = Integer.parseInt(startRow); i < Integer.parseInt(stopRow); i++) {
-            getBack = hbaseConnect("get", null, String.valueOf(i), null);
-            byte[] valName = getBack.getValue(people, name);
-            byte[] valAge = getBack.getValue(people, age);
-            byte[] valSex = getBack.getValue(people, sex);
-            byte[] valPhoneNumber = getBack.getValue(people, pN);
-            byte[] valEmail = getBack.getValue(people, email);
+        Scan s = new Scan();
+        hBaseConfig.set("hbase.zookeeper.quorum", "nqmi26");
+        HTable table = new HTable(hBaseConfig, "Member");
+        s.setTimeRange(Long.parseLong(startRow),Long.parseLong(stopRow));
+        ResultScanner rs = table.getScanner(s);
+        for (org.apache.hadoop.hbase.client.Result result = rs.next();result!=null;result=rs.next()) {
+            byte[] valName = result.getValue(people, name);
+            byte[] valAge = result.getValue(people, age);
+            byte[] valSex = result.getValue(people, sex);
+            byte[] valPhoneNumber = result.getValue(people, pN);
+            byte[] valEmail = result.getValue(people, email);
             if (!Objects.equals(Bytes.toString(valName), null)) {
                 Member mem = new Member("", "", 0, "", "");
                 mem.setName(Bytes.toString(valName));
@@ -131,13 +134,13 @@ public class DataApi {
                 mem.setPhoneNumber(Bytes.toString(valPhoneNumber));
                 mem.setSex(Bytes.toString(valSex));
                 mem.setEmail(Bytes.toString(valEmail));
-                System.out.println(gson.toJson(mem));
                 res.setAns("OK");
                 res.setMember(mem);
-                System.out.println(gson.toJson(res));
                 results.add(res);
+                System.out.println(gson.toJson(results));
             } else {
                 res.setAns("NO");
+                results.add(res);
             }
         }
 
@@ -149,8 +152,6 @@ public class DataApi {
 
         hBaseConfig.set("hbase.zookeeper.quorum", "nqmi26");
         HTable table = new HTable(hBaseConfig, "Member");
-        org.apache.hadoop.hbase.client.Result checkRow = table.getRowOrBefore(Bytes.toBytes("32767"), Bytes.toBytes("people"));
-        System.out.println(checkRow);
         switch (input) {
             case "post":
                 table.put(postH(inputMember.getName(), String.valueOf(inputMember.getAge()), inputMember.getSex(), inputMember.getPhoneNumber(), inputMember.getEmail(),rowKey));
