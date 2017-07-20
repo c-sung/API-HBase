@@ -8,6 +8,10 @@ public class Member {
     private String email;
     private int age;
 
+    public Member() {
+
+    }
+
     public String getName() {
         return name;
     }
